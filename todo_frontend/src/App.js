@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import Modal from "./components/Modal";
 import axios from "axios";
+import ShoppingList from './components/ShoppingList';
 
 class App extends Component {
   constructor(props) {
@@ -155,6 +156,7 @@ class App extends Component {
             onSave={this.handleSubmit}
           />
         ) : null}
+        <ShoppingList />
       </main>
     );
   }
