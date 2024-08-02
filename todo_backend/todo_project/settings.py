@@ -11,8 +11,19 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-
 import os 
+
+from rest_framework import authentication 
+
+# custom authentication class to bypass csrf checks
+# The csrf check causes csrf missing errors when the react frontend was running
+# in the same browser session as the django backend, and a user was
+# logged into the django backend (for django admin)
+class CsrfExemptSessionAuthentication(authentication.SessionAuthentication):
+
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -105,6 +116,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['todo_project.auth.CsrfExemptSessionAuthentication',
+                                       'rest_framework.authentication.BasicAuthentication'],
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
