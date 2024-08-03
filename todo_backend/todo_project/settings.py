@@ -117,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ['todo_project.auth.CsrfExemptSessionAuthentication',
+    'DEFAULT_AUTHENTICATION_CLASSES': ['todo_project.settings.CsrfExemptSessionAuthentication',
                                        'rest_framework.authentication.BasicAuthentication'],
 }
 
