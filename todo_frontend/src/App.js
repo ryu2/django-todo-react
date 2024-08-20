@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import Modal from "./components/Modal";
+import ActivityFinder from "./components/ActivityFinder";
 import axios from "axios";
 
 class App extends Component {
@@ -9,13 +10,19 @@ class App extends Component {
       viewCompleted: false,
       todoList: [],
       modal: false,
+      finder: false,
       activeItem: {
         title: "",
         description: "",
         completed: false,
       },
+      location: "",
+      duration: "",
+      interests: "",
+      limit: "5",
       message: "",
       response: "",
+      gettingData: false,
     };
   }
 
@@ -48,22 +55,43 @@ class App extends Component {
       .then((res) => this.refreshList());
   };
 
-  handleChatSubmit = (e) => {
-    e.preventDefault();
-
+  
+  handleFindSubmit = (location, duration, interests, limit) => {
+    //e.preventDefault();
+    this.setState({location: location, duration: duration, interests: interests, limit: limit, gettingData: true})
     try {
+      // TODO fill in the api to call
       axios
-        .post('http://127.0.0.1:8000/api/generate-text/', { prompt: this.state.message })
-        .then((res) => this.setState({ response: res.data["data"] }));
+        .post('http://127.0.0.1:8000/api/some-api/', 
+          { "some-data" : "some value" })
+        .then((res) => 
+          { this.setState({gettingData: false})
+            this.toggleFinder();
+            this.refreshList(); })
+        // if we really wanted to catch the error to handle it
+        // uncomment below
+        //.catch((error) => {
+        //  console.error('Error calling /find-activities/:', error);
+        //})
+        ;
     } catch (error) {
-      console.error('Error chatting with GPT:', error);
+      this.setState({gettingData:false})
+      console.error('Error setting up axios call', error);
     }
-  };  
+  };
 
   handleDelete = (item) => {
     axios
       .delete(`/api/tasks/${item.id}/`)
       .then((res) => this.refreshList());
+  };
+
+  toggleFinder = () => {
+    this.setState({ finder: !this.state.finder });
+  };
+
+  findActivities = () => {
+    this.setState({ finder: !this.state.finder });
   };
 
   createItem = () => {
@@ -74,6 +102,24 @@ class App extends Component {
 
   editItem = (item) => {
     this.setState({ activeItem: item, modal: !this.state.modal });
+  };
+
+  findSimilar = (item, limit) => {
+    try {
+      this.setState({gettingData : true});
+      // TODO - fill in api to call
+      axios
+        .post('http://127.0.0.1:8000/api/some-api/', 
+          { "some-data" : "some value"})
+        .then((res) => 
+          {
+            this.setState({gettingData: false});
+            this.refreshList();
+           });
+    } catch (error) {
+      this.setState({gettingData: false});
+      console.error('Error finding similar activities', error);
+    }
   };
 
   displayCompleted = (status) => {
@@ -110,19 +156,23 @@ class App extends Component {
     );
 
     return newItems.map((item) => (
-      <li
-        key={item.id}
-        className="list-group-item d-flex justify-content-between align-items-center"
-      >
-        <span
-          className={`todo-title mr-2 ${
-            this.state.viewCompleted ? "completed-todo" : ""
-          }`}
-          title={item.description}
-        >
+      <tr>    
+        <td>
           {item.title}
-        </span>
-        <span>
+        </td>
+        <td>
+          {item.description}
+        </td>
+        <td>
+          {item.duration}
+        </td>
+        <td>
+          {item.cost}
+        </td>
+        <td>
+          {item.notes}
+        </td>
+        <td>
           <button
             className="btn btn-secondary mr-2"
             onClick={() => this.editItem(item)}
@@ -130,35 +180,62 @@ class App extends Component {
             Edit
           </button>
           <button
+            className="btn btn-secondary mr-2"
+            style={{ cursor: this.state.gettingData ? 'wait' : 'default' }}
+            onClick={() => this.findSimilar(item, this.state.limit)}
+          >
+            Find Similar
+          </button>
+          <button
             className="btn btn-danger"
             onClick={() => this.handleDelete(item)}
           >
             Delete
           </button>
-        </span>
-      </li>
+        </td>
+      </tr>
     ));
   };
 
   render() {
     return (
-      <main className="container">
-        <h1 className="text-uppercase text-center my-4">Todo app</h1>
+      <main className="container" id="main" style={{ cursor: this.state.gettingData ? 'wait' : 'default' }}>
+        <h1 className="text-uppercase text-center my-4">Activity Planner</h1>
+        <h4 className="text-center my-4">Planning a trip or just looking for something to do?  Use the Activity Planner to find activities that suit YOUR interests!</h4>
         <div className="row">
-          <div className="col-md-6 col-sm-10 mx-auto p-0">
+          <div className="col-md-12 col-sm-10 mx-auto p-0">
             <div className="card p-3">
-              <div className="mb-4">
+              <div className="mb-4" >
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary mx-1"
                   onClick={this.createItem}
                 >
-                  Add task
+                  Add Activity
                 </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={this.findActivities}
+                >
+                  Find Activities
+                </button>
+
               </div>
               {this.renderTabList()}
-              <ul className="list-group list-group-flush border-top-0">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th scope="col">Activity</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Cost</th>
+                    <th scope="col">Notes</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>              
                 {this.renderItems()}
-              </ul>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -169,25 +246,18 @@ class App extends Component {
             onSave={this.handleSubmit}
           />
         ) : null}
-        <div className="row text-center">
-          <h2>Summarize tasks with GPT</h2>
-          <form onSubmit={this.handleChatSubmit}>
-            <textarea
-              value={this.state.message}
-              onChange={(e) => this.setState({ message: e.target.value })}
-              rows="4"
-              cols="50"
-            />
-            <br/>
-            <button className="btn btn-primary" type="submit">Send</button>
-          </form>
-          {this.state.response && (
-            <div>
-              <h2>Response:</h2>
-              <p>{this.state.response}</p>
-            </div>
-          )}
-        </div>        
+        {this.state.finder ? (
+          <ActivityFinder
+            location={this.state.location}
+            duration={this.state.duration}
+            interests={this.state.interests}
+            limit={this.state.limit}
+            toggle={this.toggleFinder}
+            onFind={this.handleFindSubmit}
+            gettingData={this.state.gettingData}
+          />
+        ) : null}
+               
       </main>
     );
   }

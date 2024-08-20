@@ -49,3 +49,4 @@ class NextTaskView(views.APIView):
         # to serialize the response
         serializer = TaskSerializer(aTask)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
