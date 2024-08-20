@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from .models import Task
 from .serializers import TaskSerializer
 from .services import generate_text
-
+import json
 
 class TaskListCreate(generics.ListCreateAPIView):
     queryset = Task.objects.all()
@@ -49,3 +49,4 @@ class NextTaskView(views.APIView):
         # to serialize the response
         serializer = TaskSerializer(aTask)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import GenerateTextView, TaskListCreate, TaskDetail, EchoView,NextTaskView
+from .views import GenerateTextView, TaskListCreate, TaskDetail, EchoView, NextTaskView
 
 urlpatterns = [
     path('generate-text/', GenerateTextView.as_view(), name='generate-text'),

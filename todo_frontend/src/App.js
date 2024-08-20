@@ -16,12 +16,14 @@ class App extends Component {
       },
       message: "",
       response: "",
+      isLoading: false
     };
   }
 
   componentDidMount() {
     this.refreshList();
   }
+
 
   refreshList = () => {
     axios
@@ -46,19 +48,7 @@ class App extends Component {
     axios
       .post("/api/tasks/", item)
       .then((res) => this.refreshList());
-  };
-
-  handleChatSubmit = (e) => {
-    e.preventDefault();
-
-    try {
-      axios
-        .post('http://127.0.0.1:8000/api/generate-text/', { prompt: this.state.message })
-        .then((res) => this.setState({ response: res.data["data"] }));
-    } catch (error) {
-      console.error('Error chatting with GPT:', error);
-    }
-  };  
+  }; 
 
   handleDelete = (item) => {
     axios
@@ -74,6 +64,22 @@ class App extends Component {
 
   editItem = (item) => {
     this.setState({ activeItem: item, modal: !this.state.modal });
+  };
+
+  genSubTasks = (item) => {
+    try {
+      this.setState({isLoading: true});
+      axios
+        .post('http://127.0.0.1:8000/api/generate-sub-tasks/', { "task-id":item.id, "limit": 3 , "delete-parent": true})
+        .then((res) => {
+          this.setState({ isLoading: false});
+          this.refreshList();
+          }
+        )
+    } catch (error) {
+      this.setState({ isLoading: false});
+      console.error('Error generating sub tasks:', error);
+    }
   };
 
   displayCompleted = (status) => {
@@ -123,18 +129,11 @@ class App extends Component {
           {item.title}
         </span>
         <span>
-          <button
-            className="btn btn-secondary mr-2"
-            onClick={() => this.editItem(item)}
-          >
-            Edit
-          </button>
-          <button
-            className="btn btn-danger"
-            onClick={() => this.handleDelete(item)}
-          >
-            Delete
-          </button>
+          <button class="btn" title="Edit" onClick={() => this.editItem(item)}><i class="fa fa-pencil"></i></button>
+          <button class="btn" title="Generate sub tasks"
+            style={{ cursor: this.state.isLoading ? 'wait' : 'default' }}
+            onClick={() => this.genSubTasks(item)}><i class="fa fa-list"></i></button>
+          <button class="btn" title="Delete" onClick={() => this.handleDelete(item)}><i class="fa fa-trash"></i></button>
         </span>
       </li>
     ));
@@ -142,10 +141,10 @@ class App extends Component {
 
   render() {
     return (
-      <main className="container">
+      <main className="container"  style={{ cursor: this.state.isLoading ? 'wait' : 'default' }}>
         <h1 className="text-uppercase text-center my-4">Todo app</h1>
         <div className="row">
-          <div className="col-md-6 col-sm-10 mx-auto p-0">
+          <div className="col-md-10 col-sm-10 mx-auto p-0">
             <div className="card p-3">
               <div className="mb-4">
                 <button
@@ -169,25 +168,6 @@ class App extends Component {
             onSave={this.handleSubmit}
           />
         ) : null}
-        <div className="row text-center">
-          <h2>Summarize tasks with GPT</h2>
-          <form onSubmit={this.handleChatSubmit}>
-            <textarea
-              value={this.state.message}
-              onChange={(e) => this.setState({ message: e.target.value })}
-              rows="4"
-              cols="50"
-            />
-            <br/>
-            <button className="btn btn-primary" type="submit">Send</button>
-          </form>
-          {this.state.response && (
-            <div>
-              <h2>Response:</h2>
-              <p>{this.state.response}</p>
-            </div>
-          )}
-        </div>        
       </main>
     );
   }
