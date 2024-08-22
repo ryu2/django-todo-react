@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import Modal from "./components/Modal";
-import ActivityFinder from "./components/ActivityFinder";
+import {ActivityFinder} from "./components/ActivityFinder";
 import axios from "axios";
 
 class App extends Component {
@@ -39,6 +39,10 @@ class App extends Component {
 
   toggle = () => {
     this.setState({ modal: !this.state.modal });
+  };
+
+  toggleFinder = () => {
+    this.setState({ modal: !this.state.finder });
   };
 
   handleSubmit = (item) => {
@@ -256,8 +260,7 @@ class App extends Component {
             onFind={this.handleFindSubmit}
             gettingData={this.state.gettingData}
           />
-        ) : null}
-               
+        ) : null}        
       </main>
     );
   }
