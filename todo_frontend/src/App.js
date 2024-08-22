@@ -1,12 +1,10 @@
-import React, { Component } from "react";
-import Modal from "./components/Modal";
+import React, {useEffect, useState} from "react";
+import {CustomModal} from "./components/Modal";
 import {ActivityFinder} from "./components/ActivityFinder";
 import axios from "axios";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
+function App() {
+  const [state, setState] = useState({
       viewCompleted: false,
       todoList: [],
       modal: false,
@@ -23,55 +21,53 @@ class App extends Component {
       message: "",
       response: "",
       gettingData: false,
+    });
+
+    useEffect(() => {
+      refreshList();
+    }, [])
+  
+    const refreshList = () => {
+      axios
+        .get("/api/tasks/")
+        .then((res) => setState(prev => ({...prev, todoList: res.data})))
+        .catch((err) => console.log(err));
+    }
+  
+    const toggle = () => {
+      setState((prev) => ({...prev, modal: !prev.modal}));
     };
-  }
 
-  componentDidMount() {
-    this.refreshList();
-  }
 
-  refreshList = () => {
-    axios
-      .get("/api/tasks/")
-      .then((res) => this.setState({ todoList: res.data }))
-      .catch((err) => console.log(err));
-  };
 
-  toggle = () => {
-    this.setState({ modal: !this.state.modal });
-  };
 
-  toggleFinder = () => {
-    this.setState({ modal: !this.state.finder });
-  };
-
-  handleSubmit = (item) => {
-    this.toggle();
+  const handleSubmit = (item) => {
+    toggle();
 
     if (item.id) {
       axios
         .put(`/api/tasks/${item.id}/`, item)
-        .then((res) => this.refreshList());
+        .then((res) => refreshList());
       return;
     }
     axios
       .post("/api/tasks/", item)
-      .then((res) => this.refreshList());
+      .then((res) => refreshList());
   };
 
   
-  handleFindSubmit = (location, duration, interests, limit) => {
-    //e.preventDefault();
-    this.setState({location: location, duration: duration, interests: interests, limit: limit, gettingData: true})
+  const handleFindSubmit = (location, duration, interests, limit) => {
+
+    setState((prev) => ({...prev, location: location, duration: duration, interests: interests, limit: limit, gettingData: true}));
     try {
       // TODO fill in the api to call
       axios
         .post('http://127.0.0.1:8000/api/some-api/', 
           { "some-data" : "some value" })
         .then((res) => 
-          { this.setState({gettingData: false})
-            this.toggleFinder();
-            this.refreshList(); })
+          { setState((prev) => ({...prev, gettingData: false}));
+            toggleFinder();
+            refreshList(); })
         // if we really wanted to catch the error to handle it
         // uncomment below
         //.catch((error) => {
@@ -79,73 +75,72 @@ class App extends Component {
         //})
         ;
     } catch (error) {
-      this.setState({gettingData:false})
+      setState((prev) => ({...prev, gettingData:false}));
       console.error('Error setting up axios call', error);
     }
   };
 
-  handleDelete = (item) => {
+  const handleDelete = (item) => {
     axios
       .delete(`/api/tasks/${item.id}/`)
-      .then((res) => this.refreshList());
+      .then((res) => refreshList());
   };
 
-  toggleFinder = () => {
-    this.setState({ finder: !this.state.finder });
+  const toggleFinder = () => {
+    setState((prev) => ({...prev, finder: !prev.finder }));
   };
 
-  findActivities = () => {
-    this.setState({ finder: !this.state.finder });
+  const findActivities = () => {
+    setState((prev) => ({...prev, finder: !prev.finder }));
   };
 
-  createItem = () => {
-    const item = { title: "", description: "", completed: false };
 
-    this.setState({ activeItem: item, modal: !this.state.modal });
+  const createItem = () => {
+    const item = {title: "", description: "", completed: false};
+    setState((prev) => ({...prev, activeItem: item, modal: !prev.modal}));
   };
 
-  editItem = (item) => {
-    this.setState({ activeItem: item, modal: !this.state.modal });
+  
+  const editItem = (item) => {
+    setState((prev) => ({...prev, activeItem: item, modal: !prev.modal}));
   };
 
-  findSimilar = (item, limit) => {
+  const findSimilar = (item, limit) => {
     try {
-      this.setState({gettingData : true});
+      setState((prev) => ({...prev, gettingData : true}));
       // TODO - fill in api to call
       axios
         .post('http://127.0.0.1:8000/api/some-api/', 
           { "some-data" : "some value"})
         .then((res) => 
           {
-            this.setState({gettingData: false});
-            this.refreshList();
+            setState((prev) => ({...prev, gettingData: false}));
+            refreshList();
            });
     } catch (error) {
-      this.setState({gettingData: false});
+      setState((prev) => ({...prev, gettingData: false}));
       console.error('Error finding similar activities', error);
     }
   };
 
-  displayCompleted = (status) => {
-    if (status) {
-      return this.setState({ viewCompleted: true });
-    }
-
-    return this.setState({ viewCompleted: false });
+  
+  const displayCompleted = (status) => {
+    setState((prev) => ({...prev, viewCompleted: status}));
   };
 
-  renderTabList = () => {
+
+  const renderTabList = () => {
     return (
       <div className="nav nav-tabs">
         <span
-          onClick={() => this.displayCompleted(true)}
-          className={this.state.viewCompleted ? "nav-link active" : "nav-link"}
+          onClick={() => displayCompleted(true)}
+          className={state.viewCompleted ? "nav-link active" : "nav-link"}
         >
           Complete
         </span>
         <span
-          onClick={() => this.displayCompleted(false)}
-          className={this.state.viewCompleted ? "nav-link" : "nav-link active"}
+          onClick={() => displayCompleted(false)}
+          className={state.viewCompleted ? "nav-link" : "nav-link active"}
         >
           Incomplete
         </span>
@@ -153,9 +148,9 @@ class App extends Component {
     );
   };
 
-  renderItems = () => {
-    const { viewCompleted } = this.state;
-    const newItems = this.state.todoList.filter(
+  const renderItems = () => {
+    const { viewCompleted } = state;
+    const newItems = state.todoList.filter(
       (item) => item.completed === viewCompleted
     );
 
@@ -179,20 +174,20 @@ class App extends Component {
         <td>
           <button
             className="btn btn-secondary mr-2"
-            onClick={() => this.editItem(item)}
+            onClick={() => editItem(item)}
           >
             Edit
           </button>
           <button
             className="btn btn-secondary mr-2"
-            style={{ cursor: this.state.gettingData ? 'wait' : 'default' }}
-            onClick={() => this.findSimilar(item, this.state.limit)}
+            style={{ cursor: state.gettingData ? 'wait' : 'default' }}
+            onClick={() => findSimilar(item, state.limit)}
           >
             Find Similar
           </button>
           <button
             className="btn btn-danger"
-            onClick={() => this.handleDelete(item)}
+            onClick={() => handleDelete(item)}
           >
             Delete
           </button>
@@ -201,9 +196,8 @@ class App extends Component {
     ));
   };
 
-  render() {
     return (
-      <main className="container" id="main" style={{ cursor: this.state.gettingData ? 'wait' : 'default' }}>
+      <main className="container" id="main" style={{ cursor: state.gettingData ? 'wait' : 'default' }}>
         <h1 className="text-uppercase text-center my-4">Activity Planner</h1>
         <h4 className="text-center my-4">Planning a trip or just looking for something to do?  Use the Activity Planner to find activities that suit YOUR interests!</h4>
         <div className="row">
@@ -212,19 +206,19 @@ class App extends Component {
               <div className="mb-4" >
                 <button
                   className="btn btn-primary mx-1"
-                  onClick={this.createItem}
+                  onClick={createItem}
                 >
                   Add Activity
                 </button>
                 <button
                   className="btn btn-primary"
-                  onClick={this.findActivities}
+                  onClick={findActivities}
                 >
                   Find Activities
                 </button>
 
               </div>
-              {this.renderTabList()}
+              {renderTabList()}
               <table class="table table-striped">
                 <thead>
                   <tr>
@@ -237,33 +231,33 @@ class App extends Component {
                   </tr>
                 </thead>
                 <tbody>              
-                {this.renderItems()}
+                {renderItems()}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-        {this.state.modal ? (
-          <Modal
-            activeItem={this.state.activeItem}
-            toggle={this.toggle}
-            onSave={this.handleSubmit}
+        {state.modal ? (
+          <CustomModal
+            activeItem={state.activeItem}
+            toggle={() => toggle()}
+            onSave={(task) => handleSubmit(task)}
           />
         ) : null}
-        {this.state.finder ? (
+        {state.finder ? (
           <ActivityFinder
-            location={this.state.location}
-            duration={this.state.duration}
-            interests={this.state.interests}
-            limit={this.state.limit}
-            toggle={this.toggleFinder}
-            onFind={this.handleFindSubmit}
-            gettingData={this.state.gettingData}
+            location={state.location}
+            duration={state.duration}
+            interests={state.interests}
+            limit={state.limit}
+            toggle={toggleFinder}
+            onFind={handleFindSubmit}
+            gettingData={state.gettingData}
           />
         ) : null}        
       </main>
     );
   }
-}
+
 
 export default App;
