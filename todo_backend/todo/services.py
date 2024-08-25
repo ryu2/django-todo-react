@@ -1,8 +1,7 @@
 import openai
 from django.conf import settings
 
-openai.api_key = settings.OPENAI_API_KEY
-client = openai.OpenAI()
+client = openai.OpenAI(api_key = settings.OPENAI_API_KEY)
 
 def generate_text(prompt):
 
