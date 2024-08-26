@@ -8,7 +8,8 @@ class ShoppingList extends Component {
         this.state = {
             dishName: '',
             shoppingList: null,
-            error: null
+            error: null,
+            isLoading: false 
         };
     }
 
@@ -17,12 +18,14 @@ class ShoppingList extends Component {
     };
 
     handleGenerateList = async () => {
+        this.setState({ isLoading: true, error: null });
         try {
             const response = await axios.post('/api/generate-shopping-list/', { dish_name: this.state.dishName });
             this.setState({ shoppingList: response.data.shopping_list, error: null });
         } catch (err) {
             this.setState({ error: 'Error generating shopping list. Please try again.', shoppingList: null });
         }
+        this.setState({ isLoading: false});
     };
 
     render() {
@@ -39,7 +42,7 @@ class ShoppingList extends Component {
                     />
                 </div>
                 <button onClick={this.handleGenerateList} className="btn btn-primary">
-                    Generate Shopping List
+                    {this.state.isLoading ? 'Generating...' : 'Generate Shopping List'}
                 </button>
                 {this.state.error && <p className="text-danger mt-3">{this.state.error}</p>}
                 {this.state.shoppingList && (
